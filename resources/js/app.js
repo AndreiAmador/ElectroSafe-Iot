@@ -1,3 +1,3 @@
-import '../css/app.css'
+import "../css/app.css"
 
 console.log("ElectroSafe IoT")
