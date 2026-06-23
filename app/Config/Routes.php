@@ -29,3 +29,5 @@ $routes->get('api/costo', 'ApiController::costo');
 $routes->get('api/graficas/consumo', 'ApiController::graficaConsumo');
 
 $routes->get('api/graficas/humo', 'ApiController::graficaHumo');
+
+$routes->get('api/diagnostico', 'ApiController::diagnostico');
