@@ -340,4 +340,85 @@ class ApiController extends BaseController
             'fecha' => date('Y-m-d H:i:s')
         ]);
     }
+    public function diagnostico()
+{
+    $alertaModel = new \App\Models\AlertaModel();
+
+    $alertas = $alertaModel
+        ->orderBy('id', 'DESC')
+        ->limit(10)
+        ->findAll();
+
+    if (empty($alertas)) {
+        return $this->response->setJSON([
+            'estado' => 'NORMAL',
+            'diagnostico' => 'No se detectan alertas recientes',
+            'causas' => [],
+            'recomendacion' => 'Continuar monitoreo del sistema'
+        ]);
+    }
+
+    $tipos = array_column($alertas, 'tipo_alerta');
+    $niveles = array_column($alertas, 'nivel');
+
+    $hayHumo = in_array('Humo detectado', $tipos);
+    $hayTemperatura = in_array('Temperatura elevada', $tipos);
+    $haySobreconsumo = in_array('Sobreconsumo eléctrico', $tipos);
+    $hayRiesgoCritico = in_array('CRITICO', $niveles);
+
+    $estado = 'NORMAL';
+    $diagnostico = 'Sistema en condiciones normales';
+    $recomendacion = 'Continuar monitoreo';
+    $causas = [];
+
+    if ($hayHumo) {
+        $causas[] = 'Humo detectado';
+    }
+
+    if ($hayTemperatura) {
+        $causas[] = 'Temperatura elevada';
+    }
+
+    if ($haySobreconsumo) {
+        $causas[] = 'Sobreconsumo eléctrico';
+    }
+
+    if ($hayHumo && $hayTemperatura && $haySobreconsumo) {
+        $estado = 'CRITICO';
+        $diagnostico = 'Posible corto circuito, sobrecarga o calentamiento peligroso';
+        $recomendacion = 'Desactivar el relé y revisar la instalación eléctrica';
+    } elseif ($hayHumo && $hayTemperatura) {
+        $estado = 'CRITICO';
+        $diagnostico = 'Posible calentamiento con presencia de humo';
+        $recomendacion = 'Desactivar el sistema y revisar la zona';
+    } elseif ($haySobreconsumo && $hayTemperatura) {
+        $estado = 'ALTO';
+        $diagnostico = 'Posible sobrecarga eléctrica con calentamiento';
+        $recomendacion = 'Reducir la carga conectada y revisar conexiones';
+    } elseif ($haySobreconsumo) {
+        $estado = 'ALTO';
+        $diagnostico = 'Posible sobreconsumo eléctrico';
+        $recomendacion = 'Verificar los dispositivos conectados';
+    } elseif ($hayHumo) {
+        $estado = 'ALTO';
+        $diagnostico = 'Presencia de humo o gas detectada';
+        $recomendacion = 'Revisar inmediatamente el área monitoreada';
+    } elseif ($hayTemperatura) {
+        $estado = 'PRECAUCION';
+        $diagnostico = 'Temperatura elevada detectada';
+        $recomendacion = 'Verificar ventilación o calentamiento del sistema';
+    }
+
+    if ($hayRiesgoCritico) {
+        $estado = 'CRITICO';
+    }
+
+    return $this->response->setJSON([
+        'estado' => $estado,
+        'diagnostico' => $diagnostico,
+        'causas' => $causas,
+        'recomendacion' => $recomendacion,
+        'alertas_analizadas' => count($alertas)
+    ]);
+}
 }
