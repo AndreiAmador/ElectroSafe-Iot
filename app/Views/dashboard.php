@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ElectroSafe IoT</title>
 
-    <script type="module" src="http://localhost:5173/resources/js/app.js"></script>
+   <link rel="stylesheet" href="<?= base_url('assets/app.css') ?>">
     <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 </head>
 
@@ -140,6 +140,11 @@
             <div id="eventosChart" style="width:100%;height:350px;"></div>
         </div>
 
+        <div class="card large">
+    <h3>Estadísticas Generales</h3>
+    <div id="estadisticasChart" style="width:100%;height:350px;"></div>
+    </div>
+
     </div>
 </div>
 
@@ -184,7 +189,7 @@
 </div>
 
 <script>
-const API_BASE = "http://localhost:8080";
+const API_BASE = window.location.origin;
 
 function showSection(sectionId) {
     document.querySelectorAll('.section').forEach(section => {
@@ -200,6 +205,7 @@ function showSection(sectionId) {
         alertasChart.resize();
         riesgoChart.resize();
         eventosChart.resize();
+        estadisticasChart.resize();
     }, 200);
 }
 
@@ -213,6 +219,7 @@ const mq2Chart = echarts.init(document.getElementById('humoChart'));
 const alertasChart = echarts.init(document.getElementById('alertasChart'));
 const riesgoChart = echarts.init(document.getElementById('riesgoChart'));
 const eventosChart = echarts.init(document.getElementById('eventosChart'));
+const estadisticasChart = echarts.init(document.getElementById('estadisticasChart'));
 
 /* =========================
    TARJETAS EN TIEMPO REAL
@@ -287,7 +294,7 @@ function actualizarEstados(data) {
 }
 
 /* =========================
-   GRÁFICAS
+   GRÁFICAS PRINCIPALES
 ========================= */
 
 async function cargarGraficas() {
@@ -302,7 +309,6 @@ async function cargarGraficas() {
         const temperaturas = ultimos.map(item => parseFloat(item.temperatura));
         const mq2Valores = ultimos.map(item => parseFloat(item.mq2));
 
-        // 1. Potencia histórica
         potenciaChart.setOption({
             title: { text: 'Consumo eléctrico en el tiempo' },
             tooltip: { trigger: 'axis' },
@@ -317,7 +323,6 @@ async function cargarGraficas() {
             }]
         });
 
-        // 2. Temperatura histórica
         temperaturaChart.setOption({
             title: { text: 'Temperatura registrada' },
             tooltip: { trigger: 'axis' },
@@ -331,7 +336,6 @@ async function cargarGraficas() {
             }]
         });
 
-        // 3. MQ-2 histórico
         mq2Chart.setOption({
             title: { text: 'Niveles del sensor MQ-2' },
             tooltip: { trigger: 'axis' },
@@ -344,7 +348,6 @@ async function cargarGraficas() {
             }]
         });
 
-        // 4. Distribución de alertas
         const alertasRes = await fetch(`${API_BASE}/api/alertas`);
         const alertas = await alertasRes.json();
 
@@ -373,7 +376,6 @@ async function cargarGraficas() {
             }]
         });
 
-        // 5. Índice de riesgo
         const ultimo = ultimos[ultimos.length - 1];
         const riesgoActual = ultimo ? parseFloat(ultimo.indice_riesgo) : 0;
 
@@ -386,9 +388,7 @@ async function cargarGraficas() {
                 min: 0,
                 max: 150,
                 progress: { show: true },
-                detail: {
-                    formatter: '{value}'
-                },
+                detail: { formatter: '{value}' },
                 data: [{
                     value: riesgoActual.toFixed(1),
                     name: 'Índice'
@@ -396,7 +396,6 @@ async function cargarGraficas() {
             }]
         });
 
-        // 6. Relación de eventos peligrosos
         let tempMq2 = 0;
         let corrientePotencia = 0;
         let tempCorriente = 0;
@@ -408,21 +407,10 @@ async function cargarGraficas() {
             const potenciaAlta = parseFloat(item.potencia) >= 500;
             const mq2Alto = parseFloat(item.mq2) >= 700;
 
-            if (tempAlta && mq2Alto) {
-                tempMq2++;
-            }
-
-            if (corrienteAlta && potenciaAlta) {
-                corrientePotencia++;
-            }
-
-            if (tempAlta && corrienteAlta) {
-                tempCorriente++;
-            }
-
-            if (tempAlta && corrienteAlta && mq2Alto) {
-                todoAlto++;
-            }
+            if (tempAlta && mq2Alto) tempMq2++;
+            if (corrienteAlta && potenciaAlta) corrientePotencia++;
+            if (tempAlta && corrienteAlta) tempCorriente++;
+            if (tempAlta && corrienteAlta && mq2Alto) todoAlto++;
         });
 
         eventosChart.setOption({
@@ -457,6 +445,68 @@ async function cargarGraficas() {
 
     } catch (error) {
         console.error('Error cargando gráficas:', error);
+    }
+}
+
+/* =========================
+   ESTADÍSTICAS GENERALES
+========================= */
+
+async function cargarEstadisticas() {
+    try {
+        const response = await fetch(`${API_BASE}/api/estadisticas/generales`);
+        const data = await response.json();
+
+        estadisticasChart.setOption({
+            title: { text: 'Promedio, mínimo y máximo por variable' },
+            tooltip: { trigger: 'axis' },
+            legend: {
+                data: ['Promedio', 'Mínimo', 'Máximo'],
+                bottom: 0
+            },
+            xAxis: {
+                type: 'category',
+                data: ['Potencia', 'Temperatura', 'MQ-2', 'Corriente']
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name: 'Promedio',
+                    type: 'bar',
+                    data: [
+                        data.potencia.promedio,
+                        data.temperatura.promedio,
+                        data.mq2.promedio,
+                        data.corriente.promedio
+                    ]
+                },
+                {
+                    name: 'Mínimo',
+                    type: 'bar',
+                    data: [
+                        data.potencia.minimo,
+                        data.temperatura.minimo,
+                        data.mq2.minimo,
+                        data.corriente.minimo
+                    ]
+                },
+                {
+                    name: 'Máximo',
+                    type: 'bar',
+                    data: [
+                        data.potencia.maximo,
+                        data.temperatura.maximo,
+                        data.mq2.maximo,
+                        data.corriente.maximo
+                    ]
+                }
+            ]
+        });
+
+    } catch (error) {
+        console.error('Error cargando estadísticas:', error);
     }
 }
 
@@ -566,6 +616,7 @@ async function controlarRele(estado) {
 function cargarTodo() {
     cargarRealtime();
     cargarGraficas();
+    cargarEstadisticas();
     cargarAlertas();
     cargarRele();
 }
@@ -581,6 +632,7 @@ window.addEventListener('resize', () => {
     alertasChart.resize();
     riesgoChart.resize();
     eventosChart.resize();
+    estadisticasChart.resize();
 });
 </script>
 
