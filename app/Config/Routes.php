@@ -31,3 +31,5 @@ $routes->get('api/graficas/consumo', 'ApiController::graficaConsumo');
 $routes->get('api/graficas/humo', 'ApiController::graficaHumo');
 
 $routes->get('api/diagnostico', 'ApiController::diagnostico');
+
+$routes->get('api/estadisticas/generales','EstadisticasController::generales');
