@@ -37,10 +37,56 @@ Pendiente de agregar capturas una vez finalizado el desarrollo.
 
 ESP32 → API REST → MySQL → Dashboard Web
 
-## Instrucciones de Ejecución
+## Instrucciones de Ejecución y configuracion
+1. Instalar las dependencias de PHP:
 
-1. Configurar la base de datos.
-2. Ejecutar migraciones.
-3. Iniciar CodeIgniter con `php spark serve`.
-4. Ejecutar Vite con `npm run dev`.
-5. Acceder al dashboard desde el navegador.
+```bash
+composer install
+```
+
+2. Instalar las dependencias de Node.js:
+
+```bash
+npm install
+```
+
+3. Configurar el archivo `.env`:
+
+```env
+app.baseURL = 'http://localhost:8080/'
+
+database.default.hostname = localhost
+database.default.database = electrosafe_iot
+database.default.username = root
+database.default.password =
+database.default.DBDriver = MySQLi
+database.default.port = 3306
+```
+
+> **Nota:** Si el proyecto se utilizará junto con un ESP32 en la misma red local, será necesario cambiar `localhost` por la dirección IP del equipo donde se ejecuta el servidor (por ejemplo, `http://192.168.20.39:8080/`).
+
+4. Ejecutar las migraciones:
+
+```bash
+php spark migrate
+```
+
+5. (Opcional) Ejecutar los seeders:
+
+```bash
+php spark db:seed MedicionesSeeder
+php spark db:seed AlertasSeeder
+```
+
+6. Iniciar el servidor:
+
+```bash
+php spark serve
+```
+
+7. (Opcional, durante desarrollo) Iniciar Vite:
+
+```bash
+npm run dev
+```
+

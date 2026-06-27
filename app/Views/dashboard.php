@@ -136,7 +136,7 @@
         </div>
 
         <div class="card large">
-            <h3>Eventos de Riesgo Combinados</h3>
+            <h3>Dispersión Temperatura vs MQ-2</h3>
             <div id="eventosChart" style="width:100%;height:350px;"></div>
         </div>
 
@@ -396,52 +396,57 @@ async function cargarGraficas() {
             }]
         });
 
-        let tempMq2 = 0;
-        let corrientePotencia = 0;
-        let tempCorriente = 0;
-        let todoAlto = 0;
+       const dispersion = ultimos.map(item => [
+    parseFloat(item.temperatura),
+    parseFloat(item.mq2)
+]);
 
-        ultimos.forEach(item => {
-            const tempAlta = parseFloat(item.temperatura) >= 35;
-            const corrienteAlta = parseFloat(item.corriente) >= 4;
-            const potenciaAlta = parseFloat(item.potencia) >= 500;
-            const mq2Alto = parseFloat(item.mq2) >= 700;
+eventosChart.setOption({
 
-            if (tempAlta && mq2Alto) tempMq2++;
-            if (corrienteAlta && potenciaAlta) corrientePotencia++;
-            if (tempAlta && corrienteAlta) tempCorriente++;
-            if (tempAlta && corrienteAlta && mq2Alto) todoAlto++;
-        });
+    title: {
+        text: 'Temperatura vs Nivel de Humo',
+        left: 'center'
+    },
 
-        eventosChart.setOption({
-            title: { text: 'Relación de condiciones de riesgo' },
-            tooltip: { trigger: 'axis' },
-            xAxis: {
-                type: 'category',
-                data: [
-                    'Temp + MQ2',
-                    'Corriente + Potencia',
-                    'Temp + Corriente',
-                    'Todo alto'
-                ],
-                axisLabel: { rotate: 20 }
-            },
-            yAxis: { type: 'value', name: 'Eventos' },
-            series: [{
-                name: 'Eventos detectados',
-                type: 'bar',
-                data: [
-                    tempMq2,
-                    corrientePotencia,
-                    tempCorriente,
-                    todoAlto
-                ],
-                label: {
-                    show: true,
-                    position: 'top'
-                }
-            }]
-        });
+    grid: {
+        left: '8%',
+        right: '5%',
+        top: '15%',
+        bottom: '12%'
+    },
+
+    tooltip: {
+        trigger: 'item',
+        formatter: function(params){
+            return `
+                🌡 Temperatura: <b>${params.value[0]} °C</b><br>
+                🚨 MQ-2: <b>${params.value[1]}</b>
+            `;
+        }
+    },
+
+    xAxis:{
+        type:'value',
+        name:'Temperatura (°C)',
+        splitLine:{show:true}
+    },
+
+    yAxis:{
+        type:'value',
+        name:'MQ-2',
+        splitLine:{show:true}
+    },
+
+    series:[{
+        type:'scatter',
+        symbolSize:14,
+        data: dispersion,
+        emphasis:{
+            scale:true
+        }
+    }]
+
+});
 
     } catch (error) {
         console.error('Error cargando gráficas:', error);
