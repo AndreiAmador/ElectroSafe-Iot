@@ -63,7 +63,7 @@ database.default.DBDriver = MySQLi
 database.default.port = 3306
 ```
 
-> **Nota:** Si el proyecto se utilizará junto con un ESP32 en la misma red local, será necesario cambiar `localhost` por la dirección IP del equipo donde se ejecuta el servidor (por ejemplo, `http://192.168.20.39:8080/`).
+> **Nota:** Si el proyecto se utilizará junto con un ESP32 en la misma red local, será necesario cambiar `localhost` por la dirección IP del equipo donde se ejecuta el servidor (por ejemplo, `http://192.168.20.39:8080/`), tambien no olvidar activar el xampp 
 
 4. Ejecutar las migraciones:
 
@@ -90,3 +90,4 @@ php spark serve
 npm run dev
 ```
 
+n
